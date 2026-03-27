@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>品管題庫隨機測驗</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: .95rem;
+    }
+
+    .content {
+      padding: 22px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      color: var(--muted);
+    }
+
+    .question {
+      font-size: 1.28rem;
+      font-weight: 700;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option {
+      width: 100%;
+      border: 2px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .option:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .option.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .control-row {
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button, input {
+      font-family: inherit;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-light { background: #e5e7eb; color: #111827; }
+
+    .jump-input {
+      width: 90px;
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .nav-btn {
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .nav-btn.current {
+      border: 2px solid #111827;
+    }
+
+    .nav-btn.answered {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-color: #93c5fd;
+    }
+
+    .result {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #e5e7eb;
+      padding-top: 20px;
+    }
+
+    .result.show { display: block; }
+
+    .summary {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+    }
+
+    .score {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--danger);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .ok { color: var(--success); font-weight: 700; }
+    .no { color: var(--danger); font-weight: 700; }
+    .muted { color: var(--muted); }
+    .error-box {
+      padding: 16px;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .question { font-size: 1.1rem; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .control-row { flex-direction: column; align-items: stretch; }
+      .left-controls, .right-controls { width: 100%; }
+      .left-controls .btn, .right-controls .btn, .jump-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div class="title">品管題庫隨機測驗</div>
+        <div class="meta">
+          <div>題號：<span id="currentNo">1</span> / <span id="totalNo">0</span></div>
+          <div>已作答：<span id="answeredNo">0</span></div>
+          <div>剩餘時間：<span id="timer">90:00</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div id="errorBox" class="error-box" style="display:none;"></div>
+
+        <div id="quizArea">
+          <div class="status-row">
+            <div>每次隨機抽 100 題</div>
+            <div class="muted">題庫檔需與本 HTML 放在同一資料夾</div>
+          </div>
+
+          <div id="questionText" class="question">正在載入題目...</div>
+          <div id="optionsBox" class="options"></div>
+
+          <div class="control-row">
+            <div class="left-controls">
+              <button class="btn btn-light" id="prevBtn">上一題</button>
+              <button class="btn btn-primary" id="nextBtn">下一題</button>
+              <button class="btn btn-danger" id="submitBtn">交卷</button>
+            </div>
+            <div class="right-controls">
+              <input id="jumpInput" class="jump-input" type="number" min="1" placeholder="題號">
+              <button class="btn btn-light" id="jumpBtn">跳到題號</button>
+              <button class="btn btn-success" id="restartBtn">重新抽題</button>
+            </div>
+          </div>
+
+          <div id="navGrid" class="nav-grid"></div>
+        </div>
+
+        <div id="resultBox" class="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./品管考試題庫.js"></script>
+  <script>
+    let exam = [];
+    let userAnswers = [];
+    let currentIndex = 0;
+    let ended = false;
+    let timerId = null;
+    let endAt = 0;
+
+    function fisherYatesShuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function showError(msg) {
+      const box = document.getElementById('errorBox');
+      box.style.display = 'block';
+      box.innerHTML = msg;
+    }
+
+    function parseAnswerFromOption(opt) {
+      const m = opt.match(/\(([A-D])\)/);
+      return m ? m[1] : '';
+    }
+
+    function initExam() {
+      if (typeof questionBank === 'undefined' || !Array.isArray(questionBank)) {
+        showError('讀不到題庫。請確認 <b>quiz_web.html</b> 與 <b>品管考試題庫.js</b> 放在同一資料夾，而且題庫檔內容是 <code>let questionBank = [...]</code>。');
+        return;
+      }
+
+      const valid = questionBank.filter(q => q && q.q && Array.isArray(q.options) && q.options.length === 4 && /^[A-D]$/.test(q.answer));
+      if (!valid.length) {
+        showError('題庫格式不正確，沒有可用題目。');
+        return;
+      }
+
+      exam = fisherYatesShuffle(valid).slice(0, Math.min(100, valid.length));
+      userAnswers = new Array(exam.length).fill(null);
+      currentIndex = 0;
+      ended = false;
+
+      document.getElementById('totalNo').textContent = exam.length;
+      document.getElementById('resultBox').className = 'result';
+      document.getElementById('resultBox').innerHTML = '';
+      document.getElementById('quizArea').style.display = 'block';
+
+      buildNav();
+      drawQuestion();
+      startTimer(90 * 60);
+    }
+
+    function buildNav() {
+      const nav = document.getElementById('navGrid');
+      nav.innerHTML = exam.map((_, i) => `<button class="nav-btn" id="nav-${i}" onclick="jumpTo(${i})">${i + 1}</button>`).join('');
+      updateNav();
+    }
+
+    function updateNav() {
+      let answered = 0;
+      exam.forEach((_, i) => {
+        const btn = document.getElementById(`nav-${i}`);
+        if (!btn) return;
+        btn.classList.toggle('current', i === currentIndex);
+        const hasAnswer = userAnswers[i] !== null;
+        btn.classList.toggle('answered', hasAnswer);
+        if (hasAnswer) answered++;
+      });
+      document.getElementById('answeredNo').textContent = answered;
+    }
+
+    function drawQuestion() {
+      if (!exam.length || ended) return;
+      const q = exam[currentIndex];
+
+      document.getElementById('currentNo').textContent = currentIndex + 1;
+      document.getElementById('questionText').textContent = q.q;
+
+      const optionsBox = document.getElementById('optionsBox');
+      optionsBox.innerHTML = '';
+
+      q.options.forEach(opt => {
+        const val = parseAnswerFromOption(opt);
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        if (userAnswers[currentIndex] === val) btn.classList.add('selected');
+        btn.textContent = opt;
+        btn.onclick = () => saveAnswer(val);
+        optionsBox.appendChild(btn);
+      });
+
+      updateNav();
+    }
+
+    function saveAnswer(value) {
+      if (ended) return;
+      userAnswers[currentIndex] = value;
+      drawQuestion();
+    }
+
+    function move(step) {
+      if (ended) return;
+      const next = currentIndex + step;
+      if (next >= 0 && next < exam.length) {
+        currentIndex = next;
+        drawQuestion();
+      }
+    }
+
+    function jumpTo(index) {
+      if (ended) return;
+      if (index >= 0 && index < exam.length) {
+        currentIndex = index;
+        drawQuestion();
+      }
+    }
+
+    function startTimer(seconds) {
+      if (timerId) clearInterval(timerId);
+      endAt = Date.now() + seconds * 1000;
+      tickTimer();
+      timerId = setInterval(tickTimer, 1000);
+    }
+
+    function tickTimer() {
+      const diff = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      const min = String(Math.floor(diff / 60)).padStart(2, '0');
+      const sec = String(diff % 60).padStart(2, '0');
+      document.getElementById('timer').textContent = `${min}:${sec}`;
+      if (diff <= 0) {
+        clearInterval(timerId);
+        finishExam(true);
+      }
+    }
+
+    function finishExam(auto = false) {
+      if (ended) return;
+
+      const unanswered = userAnswers.filter(v => v === null).length;
+      if (!auto && unanswered > 0) {
+        if (!confirm(`還有 ${unanswered} 題未作答，確定交卷？`)) return;
+      }
+
+      ended = true;
+      if (timerId) clearInterval(timerId);
+
+      let correct = 0;
+      let rows = '';
+
+      exam.forEach((q, i) => {
+        const user = userAnswers[i] || '未作答';
+        const ok = user === q.answer;
+        if (ok) correct++;
+
+        rows += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div><b>${escapeHtml(q.q)}</b></div>
+              <div class="muted" style="margin-top:6px;">${q.options.map(escapeHtml).join(' | ')}</div>
+            </td>
+            <td class="${ok ? 'ok' : 'no'}">${escapeHtml(user)}</td>
+            <td class="ok">${escapeHtml(q.answer)}</td>
+            <td class="${ok ? 'ok' : 'no'}">${ok ? '對' : '錯'}</td>
+          </tr>`;
+      });
+
+      const score = Math.round((correct / exam.length) * 100);
+      const resultBox = document.getElementById('resultBox');
+      resultBox.innerHTML = `
+        <div class="summary">
+          <div style="font-size:1.25rem;font-weight:800;">測驗結果</div>
+          <div>總題數：${exam.length}</div>
+          <div>答對題數：${correct}</div>
+          <div>答錯題數：${exam.length - correct}</div>
+          <div>分數：<span class="score">${score}</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:8%;">題號</th>
+                <th>題目內容</th>
+                <th style="width:12%;">你的答案</th>
+                <th style="width:12%;">正確答案</th>
+                <th style="width:8%;">判定</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      resultBox.className = 'result show';
+      document.getElementById('quizArea').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => move(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => move(1));
+    document.getElementById('submitBtn').addEventListener('click', () => finishExam(false));
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      if (!confirm('要重新抽 100 題並重做嗎？')) return;
+      initExam();
+    });
+    document.getElementById('jumpBtn').addEventListener('click', () => {
+      const value = Number(document.getElementById('jumpInput').value);
+      if (!Number.isInteger(value) || value < 1 || value > exam.length) {
+        alert(`請輸入 1 到 ${exam.length} 的整數題號`);
+        return;
+      }
+      jumpTo(value - 1);
+    });
+
+    window.addEventListener('load', initExam);
+  </script>
+</body>
+</html>
